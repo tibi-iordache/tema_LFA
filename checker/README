@@ -1,0 +1,24 @@
+Iordache Tiberiu-Mihai 336CA
+
+                            Tema LFA
+
+    Reprezentare date input automat:
+        Clasa speciala ce contine variabile n,m,s,f, un graf reprezentat prin 
+    alta clasa(contine lista de noduri vizitate si matricea de adiacenta) si 
+    starile de input, respectiv starile finale.
+
+    Accessible:
+        Pornind din starile initiale, parcurg graful(DFS) si afisez toate
+    nodurile in care ajung.
+
+    Productive:
+        Pornind din oricare nod, fac un BFS si vad daca ajung la o stare finala.
+    Daca da, afisez acea stare reprezentand o stare productiva.
+
+    Utils:
+
+    Synchronize:
+
+
+Resurse:
+    DFS: https://www.geeksforgeeks.org/depth-first-search-or-dfs-for-a-graph/
