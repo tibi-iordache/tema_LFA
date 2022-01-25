@@ -2,23 +2,78 @@ Iordache Tiberiu-Mihai 336CA
 
                             Tema LFA
 
-    Reprezentare date input automat:
-        Clasa speciala ce contine variabile n,m,s,f, un graf reprezentat prin 
-    alta clasa(contine lista de noduri vizitate si matricea de adiacenta) si 
-    starile de input, respectiv starile finale.
-
+Descriere rezolvari cerinte:
     Accessible:
-        Pornind din starile initiale, parcurg graful(DFS) si afisez toate
-    nodurile in care ajung.
+        Pornind din starile initiale, parcurg graful folosind un DFS si afisez
+	toate starile in care ajung.
 
     Productive:
-        Pornind din oricare nod, fac un BFS si vad daca ajung la o stare finala.
-    Daca da, afisez acea stare reprezentand o stare productiva.
+		Pornind din fiecare stare a automatului, parcurg graful folosind un
+	BFS si verific daca ajung intr-o stare finala; daca da, salvez starea din
+	care am plecat ca fiind stare productiva.
 
     Utils:
+    	Intersectez rezultatele obtinute la problemele accessible si
+	 productive.
 
     Synchronize:
+		Am implementat algoritmul 2 din documentul Homing.pdf[1].
 
+		Initial secventa x de sincronizare este "".
+		Fie multimea S care reprezinta multimea starilor in care ajung prin
+ 	aplicarea secventei curente de sincronizare asupra fiecarei stari initiale
+	a automatului(acestea difera in functie de tipul sincronizarii,
+	generala/partiala/restrictionata/partial restrictionata).
 
-Resurse:
-    DFS: https://www.geeksforgeeks.org/depth-first-search-or-dfs-for-a-graph/
+		Caut 2 stari diferite din S care au secventa de imbinare Y.
+		Daca le gasesc, atunci adaug secventa Y la secventa de sincronizare x.
+		Daca nu, inseamna ca nu exista secventa de sincronizare, asa ca intorc
+	secventa "";
+
+		Voi continua sa tot imbin stari si sa construiesc secventa de
+	sincronizare pana cand cardinalul multimii S devine 1, adica toate starile
+	au fost imbinate in una singura.
+
+		Pentru cautarea secventei de imbinare dintre 2 stari s si t, fac o
+	parcurgere BFS in padurea grafului initial: fiecare nod din aceasta padure
+	este simbolizat de un tuplu de forma (s,t), codificat ca: s * nrNoduri + t
+	(unde nrNoduri este nr nodurilor grafului initial/numarul de stari al
+	automatului).
+		Aceasta parcurgere se opreste cand gasesc un nod singleton(care sa aiba
+	s == t). Odata gasit, ma voi intoarce pe ruta folosind un vector de parinti
+	pentru a construii secventa de simboluri care m-a adus la acest nod.
+
+    Labyrinth:
+		Codificarea labirintului ca si automat:
+		- l * c reprezinta numarul de noduri
+		- 4 reprezinta numarul de simboluri(in cazul nostru au semnificatia de
+	 		east, north, west, south)
+		- r reprezinta numarul de stari initiale
+		- o reprezinta numarul de stari finale
+
+		Pentru fiecare celula din tabel, voi construi graful astfel:
+		Daca fac AND logic intre codificarea celulei si una dintre directii
+	(east = 1, north = 2, west = 4, south = 8), iar rezultatul este 0,
+	inseamna ca nu am zid, asa ca voi adauga muchie intre nodul curent
+	(calculat ca si celula_i * c + celula_j) si nodul vecin in functie de
+	directie.
+		Daca insa rezultatul este diferit de 0, inseamna ca am zid asa ca voi
+	adauga muchie de la nodul curent catre el insusi.
+
+		Starile initiale for fi calculate ca r_x * c + r_y.
+		Starile finale vor fi calculate ca o_x * c + o_y;
+
+Structura fisiere:
+	Graph.java - contine reprezentarea grafului folosit in algoritmi, metodele
+	 			folosite pentru cautare: DFS, BFS(pentru graf simplu
+	 			si pentru un graf de tip forest)
+
+	Automata.java - contine reprezentarea automatului folosit
+
+	Main.java - contine metodele necesare rezolvarii tuturor cerintelor
+    				obligatorii
+
+	Labyrinth.java - contine metodele necesare rezolvarii problemei bonus
+
+Resurse folosite:
+	[1]: https://www.math.uni.wroc.pl/~kisiel/auto/Homing.pdf

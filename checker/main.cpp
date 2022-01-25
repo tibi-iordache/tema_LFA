@@ -6,6 +6,7 @@
 #include <queue>
 #include <unordered_map>
 #include <list>
+#include <string.h>
 
 using namespace std;
 
@@ -20,21 +21,17 @@ enum ProblemTypes {
 
 class Graph {
 public:
-    map<DATA_TYPE, bool> visited;
-    // TODO: explain this
-    map<DATA_TYPE, vector<DATA_TYPE>> adj;
+    DATA_TYPE nodesCount;
 
-    
-    // TODO: remove later if useless
-    // for bfs
-    DATA_TYPE V;
-    list<DATA_TYPE> *adj_bfs;
+    // bool* visited;
+    vector<bool> visited;
+    list<DATA_TYPE> *adjLists;
 
     Graph();
-    Graph(DATA_TYPE V); // constructor
+    Graph(DATA_TYPE nodesCount); 
 
     void DFS(DATA_TYPE currentNode);
-    bool* BFS(DATA_TYPE startNode);
+    bool BFS(DATA_TYPE startNode, bool* finalStatesBools);
 };
 
 class Automata {
@@ -54,8 +51,17 @@ Graph::Graph()
 
 Graph::Graph(DATA_TYPE V) 
 {
-    this->V = V;
-    adj_bfs = new list<DATA_TYPE>[V];
+    this->nodesCount = nodesCount;
+
+    // this->visited = new bool[nodesCount];
+
+    // for (DATA_TYPE i = 0; i < nodesCount; ++i) {
+    //     this->visited[i] = false;
+    // }
+    vector<bool> visitedNodesBools(nodesCount, false);
+    this->visited = visitedNodesBools;
+
+    this->adjLists = new list<DATA_TYPE>[nodesCount];
 }
 
 Automata::Automata(DATA_TYPE n, DATA_TYPE m, DATA_TYPE s, DATA_TYPE f)
@@ -84,20 +90,13 @@ Automata readInput()
 
     // read the graph adj lists
     for (DATA_TYPE i = 0; i < n; ++i) {
-        vector<DATA_TYPE> destinations;
-
         for (DATA_TYPE j = 0; j < m; ++j) {
             DATA_TYPE destination;
 
             cin >> destination;
 
-            destinations.push_back(destination);
-
-            // for bfs
-            automataData.graphData.adj_bfs[i].push_back(destination);
+            automataData.graphData.adjLists[i].push_back(destination);
         }
-
-        automataData.graphData.adj[i] = destinations;
     }
 
     // read the initial states
@@ -126,12 +125,14 @@ void Graph::DFS(DATA_TYPE currentNode)
 {
     // print the current node and mark it as visited
     visited[currentNode] = true;
+
+    list<DATA_TYPE>::iterator i;
     
     // go through all the node neighbours
-    for (DATA_TYPE i = 0; i < adj[currentNode].size(); ++i) {
+    for (i = adjLists[currentNode].begin(); i != adjLists[currentNode].end(); ++i) {
         // explore the non visited ones
-        if (!visited[adj[currentNode][i]])
-            DFS(adj[currentNode][i]);
+        if (!visited[*i])
+            DFS(*i);
     }
 }
 
@@ -140,37 +141,35 @@ vector<DATA_TYPE> solveAccessibleProblem(Automata automataData)
 {
     vector<DATA_TYPE> accessibleStates;
 
+    // run dfs on all initial states
     for (DATA_TYPE i = 0; i < automataData.s; ++i) {
         DATA_TYPE initialState = automataData.initialStates[i];
 
-        if (!automataData.graphData.visited[i]) {
-            automataData.graphData.DFS(i);
+        if (!automataData.graphData.visited[initialState]) {
+            automataData.graphData.DFS(initialState);
+        }
+    }
 
-            map<DATA_TYPE, bool>::iterator j;
-
-            for (j = automataData.graphData.visited.begin();
-                 j != automataData.graphData.visited.end();
-                 ++j) {
-                     if ((*j).second) {
-                        accessibleStates.push_back((*j).first);
-                     }
-                 }
+    // all the accessible states are found in the visited vector
+    for (DATA_TYPE j = 0; j < automataData.n; ++j) {
+        if (automataData.graphData.visited[j]) {
+            accessibleStates.push_back(j);
         }
     }
 
     return accessibleStates;
 }
 
-bool* Graph::BFS(DATA_TYPE startNode)
+bool Graph::BFS(DATA_TYPE startNode, bool* finalStatesBools)
 {
-    bool *visitedNodes = new bool[V];
-    for(DATA_TYPE i = 0; i < V; ++i)
-        visitedNodes[i] = false;
+    // case for when the starting node itself is a final state
+    if (finalStatesBools[startNode]) 
+        return true;
 
     list<DATA_TYPE> queue;
 
     // mark the starting node as visited and save it in the queue
-    visitedNodes[startNode] = true;
+    visited[startNode] = true;
     queue.push_back(startNode);
 
     list<DATA_TYPE>::iterator i;
@@ -181,40 +180,44 @@ bool* Graph::BFS(DATA_TYPE startNode)
         currentNode = queue.front();
         queue.pop_front();
 
-        // check all the neighbours
-        for (i = adj_bfs[currentNode].begin(); i != adj_bfs[currentNode].end(); ++i) {
-            if (!visitedNodes[*i]) {
-                visitedNodes[*i] = true;
+        if (finalStatesBools[currentNode]) 
+            return true;
+
+        // go through all the node neighbours
+        for (i = adjLists[currentNode].begin(); i != adjLists[currentNode].end(); ++i) {
+            if (!visited[*i]) {
+                if (finalStatesBools[*i]) 
+                    return true;
+
+                visited[*i] = true;
 
                 queue.push_back(*i);
             }
         }
     }
 
-    return visitedNodes;
+    return false;
 }
 
 /// s = 0, f != 0
 vector<DATA_TYPE> solveProductiveProblem(Automata automataData)
 {
     vector<DATA_TYPE> productiveStates;
+    bool* finalStatesBools = new bool[automataData.n];
 
-    
+    for (DATA_TYPE i = 0; i < automataData.n; ++i)
+        finalStatesBools[i] = false;
+
+    for (DATA_TYPE i = 0; i < automataData.f; ++i) 
+        finalStatesBools[automataData.finalStates[i]] = true;
+
     for (DATA_TYPE i = 0; i < automataData.n; ++i) {
-        bool* visitedNodes = automataData.graphData.BFS(i);
+        for (DATA_TYPE j = 0; j < automataData.n; ++j) 
+            automataData.graphData.visited[j] = false;
 
-        vector<DATA_TYPE>::iterator j;
-        vector<DATA_TYPE>::reverse_iterator k;
+        // bool isProductive = automataData.graphData.BFS(i, finalStatesBools);
 
-        for (j = automataData.finalStates.begin(), k = automataData.finalStates.rbegin();
-             j != automataData.finalStates.end() && k != automataData.finalStates.rend();
-             ++j, ++k) {
-            if (visitedNodes[*j] || visitedNodes[*k]) {
-                productiveStates.push_back(i);
-
-                break;
-            } 
-        }
+        // if (isProductive) productiveStates.push_back(i);
     }
 
     return productiveStates;

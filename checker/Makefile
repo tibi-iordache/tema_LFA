@@ -1,17 +1,23 @@
-CC = g++
-CFLAGS = -Wall -g
+JFLAGS = -g
+JC = javac
+JVM = java
 
 all: build
 
-build: sync
+sources = $(wildcard *.java)
+classes = $(sources:.java=.class)
 
-sync: main.o 
-	$(CC) $(CFLAGS) -o $@ $^
-
-.PHONY: clean
+build: $(classes)
 
 run: build
-	./sync $(problem)
+	$(JVM) Main $(problem)
 
-clean:
-	rm -f *.o *~ sync 
+labyrinth: build
+	$(JVM) Labyrinth
+
+.PHONY: clean
+clean :
+	rm -f *.class *~
+
+%.class : %.java
+	$(JC) $(JFLAGS) $<
